@@ -94,7 +94,7 @@ class ForgeAgent(Agent):
         )
         return task
 
-    async def execute_step(self, task_id: str, step_request: StepRequestBody) -> Step:
+    async def execute_step_clone(self, task_id: str, step_request: StepRequestBody) -> Step:
         """
         For a tutorial on how to add your own logic please see the offical tutorial series:
         https://aiedge.medium.com/autogpt-forge-e3de53cc58ec
@@ -141,5 +141,55 @@ class ForgeAgent(Agent):
         step.output = "Washington D.C"
 
         LOG.info(f"\t✅ Final Step completed: {step.step_id}")
+
+        return step
+
+    async def execute_step(self, task_id: str, step_request: StepRequestBody) -> Step:
+
+        # An example that
+        self.workspace.write(task_id=task_id, path="output.txt", data=b"Washington D.C")
+        step = await self.db.create_step(
+            task_id=task_id, input=step_request, is_last=True
+        )
+        step_input = "None"
+        if step.input:
+            step_input = step.input[:19]
+
+        prompt_engine = PromptEngine("gpt-3.5-turbo")
+        system_prompt = prompt_engine.load_prompt("system-format")
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+        ]
+        task_kwargs = {
+            "task": step_input,
+            "abilities": self.abilities.list_abilities_for_prompt(),
+        }
+        task_prompt = prompt_engine.load_prompt("task-step", **task_kwargs)
+        messages.append({"role": "user", "content": task_prompt})
+        print("ask " + str(messages))
+        chat_response = await chat_completion_request(messages, model="gpt-3.5-turbo")
+        answer = json.loads(chat_response["choices"][0]["message"]["content"])
+        ability = answer["ability"]
+        # output = await self.abilities.run_ability(
+        #     task_id, ability["name"], **ability["args"]
+        # )
+        step.output = answer["thoughts"]["speak"]
+
+        message = f"\t🔄 Step executed: {step.step_id} input: {step_input}"
+        if step.is_last:
+            message = (
+                f"\t✅ Final Step completed: {step.step_id} input: {step_input}"
+            )
+
+        LOG.info(message)
+
+        artifact = await self.db.create_artifact(
+            task_id=task_id,
+            step_id=step.step_id,
+            file_name="output.txt",
+            relative_path="",
+            agent_created=True,
+        )
 
         return step
