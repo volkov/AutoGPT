@@ -153,7 +153,7 @@ class ForgeAgent(Agent):
         )
         step_input = "None"
         if step.input:
-            step_input = step.input[:19]
+            step_input = step.input
 
         prompt_engine = PromptEngine("gpt-3.5-turbo")
         system_prompt = prompt_engine.load_prompt("system-format")
@@ -167,13 +167,30 @@ class ForgeAgent(Agent):
         }
         task_prompt = prompt_engine.load_prompt("task-step", **task_kwargs)
         messages.append({"role": "user", "content": task_prompt})
-        print("ask " + str(messages))
+        # print task
+        print("Prompt:")
+        pprint.pprint(messages)
+
         chat_response = await chat_completion_request(messages, model="gpt-3.5-turbo")
-        answer = json.loads(chat_response["choices"][0]["message"]["content"])
+        raw_answer = chat_response["choices"][0]["message"]["content"]
+        # print
+        print("Raw Answer:")
+        pprint.pprint(raw_answer)
+
+        answer = json.loads(raw_answer)
         ability = answer["ability"]
-        # output = await self.abilities.run_ability(
-        #     task_id, ability["name"], **ability["args"]
-        # )
+        # print answer and ability
+        print("Answer:")
+        pprint.pprint(answer)
+        print("Ability:")
+        pprint.pprint(ability)
+
+        output = await self.abilities.run_ability(
+            task_id, ability["name"], **ability["args"]
+        )
+        print("Output:")
+        pprint.pprint(output)
+
         step.output = answer["thoughts"]["speak"]
 
         message = f"\t🔄 Step executed: {step.step_id} input: {step_input}"
