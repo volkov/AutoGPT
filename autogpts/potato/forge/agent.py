@@ -129,7 +129,6 @@ class ForgeAgent(Agent):
 
         self.workspace.write(task_id=task_id, path="output.txt", data=b"Washington D.C")
 
-
         await self.db.create_artifact(
             task_id=task_id,
             step_id=step.step_id,
@@ -137,7 +136,7 @@ class ForgeAgent(Agent):
             relative_path="",
             agent_created=True,
         )
-        
+
         step.output = "Washington D.C"
 
         LOG.info(f"\t✅ Final Step completed: {step.step_id}")
@@ -146,15 +145,22 @@ class ForgeAgent(Agent):
 
     async def execute_step(self, task_id: str, step_request: StepRequestBody) -> Step:
 
-        # An example that
-        self.workspace.write(task_id=task_id, path="output.txt", data=b"Washington D.C")
-        step = await self.db.create_step(
-            task_id=task_id, input=step_request, is_last=True
-        )
-        step_input = "None"
-        if step.input:
-            step_input = step.input
+        print("Task ID:")
+        pprint.pprint(task_id)
+        print("Step Request:")
+        pprint.pprint(step_request)
 
+        if not step_request.input:
+            steps = (await self.db.list_steps(task_id))[0]
+            LOG.info(f"Found {steps} from db")
+            # find first step without output
+            # step = next((step for step in steps if not step.status == "done"), None)
+            step = steps[-1]
+            LOG.info(f"Found {step} from db")
+        else:
+            step = await self.db.create_step(
+                task_id=task_id, input=step_request, is_last=False
+            )
         prompt_engine = PromptEngine("gpt-3.5-turbo")
         system_prompt = prompt_engine.load_prompt("system-format")
 
@@ -162,7 +168,7 @@ class ForgeAgent(Agent):
             {"role": "system", "content": system_prompt},
         ]
         task_kwargs = {
-            "task": step_input,
+            "task": step.input,
             "abilities": self.abilities.list_abilities_for_prompt(),
         }
         task_prompt = prompt_engine.load_prompt("task-step", **task_kwargs)
@@ -184,6 +190,8 @@ class ForgeAgent(Agent):
         pprint.pprint(answer)
         print("Ability:")
         pprint.pprint(ability)
+        if ability["name"] == "write_file":
+            step.is_last = True
 
         output = await self.abilities.run_ability(
             task_id, ability["name"], **ability["args"]
@@ -191,22 +199,34 @@ class ForgeAgent(Agent):
         print("Output:")
         pprint.pprint(output)
 
+        if ability["name"] == "read_file":
+            additional_input = {"file_content": str(output), "ability": ability}
+
         step.output = answer["thoughts"]["speak"]
 
-        message = f"\t🔄 Step executed: {step.step_id} input: {step_input}"
+        LOG.info(f"Update {step} to done")
+        await self.db.update_step(task_id, step.step_id, "done")
+
+        message = f"\t🔄 Step executed: {step.step_id} input: {step.input}"
         if step.is_last:
             message = (
-                f"\t✅ Final Step completed: {step.step_id} input: {step_input}"
+                f"\t✅ Final Step completed: {step.step_id} input: {step.input}"
             )
+        else:
+            step_request.input = step_request.input + json.dumps(additional_input)
+            next_step = await self.db.create_step(
+                task_id=task_id, input=step_request, is_last=False
+            )
+            LOG.info(f"Created next step {next_step}")
 
         LOG.info(message)
 
-        artifact = await self.db.create_artifact(
-            task_id=task_id,
-            step_id=step.step_id,
-            file_name="output.txt",
-            relative_path="",
-            agent_created=True,
-        )
+        # artifact = await self.db.create_artifact(
+        #     task_id=task_id,
+        #     step_id=step.step_id,
+        #     file_name="output.txt",
+        #     relative_path="",
+        #     agent_created=True,
+        # )
 
         return step
