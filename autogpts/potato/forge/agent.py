@@ -213,7 +213,9 @@ class ForgeAgent(Agent):
                 f"\t✅ Final Step completed: {step.step_id} input: {step.input}"
             )
         else:
-            step_request.input = step_request.input + json.dumps(additional_input)
+            step_request.input = (step_request.input + "\n" +
+                                  "Your previous action was to run ability " + json.dumps(ability) + "\n"
+                                  "It's output was " + str(output))
             next_step = await self.db.create_step(
                 task_id=task_id, input=step_request, is_last=False
             )
