@@ -22,7 +22,7 @@ def run_conversation():
             'audio) and moves them into these corresponding folders: ' + \
             "'images', 'documents', 'audio'. The entry point will be a python " + \
             'file that can be run this way: python organize_files.py ' + \
-            '--directory_path=YOUR_DIRECTORY_PATH',
+            '--directory_path=YOUR_DIRECTORY_PATH'
 
     task = 'Create a random password generator. The password should have ' + \
            'between 8 and 16 characters and should contain letters, numbers ' + \
@@ -36,7 +36,7 @@ def run_conversation():
            'should raise a ValueError.'
     print(task2)
     messages = [{"role": "system", "content": "You are heplfull assistant"},
-                {"role": "user", "content": task2, }]
+                {"role": "user", "content": task2 }]
     functions = [
         {'description': 'Read data from a file',
          'name': 'read_file',
