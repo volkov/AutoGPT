@@ -3,24 +3,24 @@ from typing import List
 from ..registry import ability
 
 
-@ability(
-    name="list_files",
-    description="List files in a directory",
-    parameters=[
-        {
-            "name": "path",
-            "description": "Path to the directory",
-            "type": "string",
-            "required": True,
-        }
-    ],
-    output_type="list[str]",
-)
-async def list_files(agent, task_id: str, path: str) -> List[str]:
-    """
-    List files in a workspace directory
-    """
-    return agent.workspace.list(task_id=task_id, path=path)
+# @ability(
+#     name="list_files",
+#     description="List files in a directory",
+#     parameters=[
+#         {
+#             "name": "path",
+#             "description": "Path to the directory",
+#             "type": "string",
+#             "required": True,
+#         }
+#     ],
+#     output_type="list[str]",
+# )
+# async def list_files(agent, task_id: str, path: str) -> List[str]:
+#     """
+#     List files in a workspace directory
+#     """
+#     return agent.workspace.list(task_id=task_id, path=path)
 
 
 @ability(
@@ -36,7 +36,7 @@ async def list_files(agent, task_id: str, path: str) -> List[str]:
         {
             "name": "data",
             "description": "Data to write to the file",
-            "type": "bytes",
+            "type": "string",
             "required": True,
         },
     ],

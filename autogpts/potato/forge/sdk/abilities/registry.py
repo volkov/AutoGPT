@@ -70,6 +70,26 @@ class Ability(pydantic.BaseModel):
         func_summary += f" -> {self.output_type}. Usage: {self.description},"
         return func_summary
 
+    def to_function(self):
+        return {
+            "name": self.name,
+            "description": self.description,
+            "parameters": {
+                "type": "object",
+                "properties": self.to_parameters()
+            }
+        }
+
+    def to_parameters(self):
+        result = {}
+        for param in self.parameters:
+            result[param.name] = {
+                "description": param.description,
+                "type": param.type,
+                # "required": param.required
+            }
+        return result
+
 
 def ability(
     name: str, description: str, parameters: List[AbilityParameter], output_type: str
@@ -138,6 +158,9 @@ class AbilityRegister:
 
     def list_abilities_for_prompt(self) -> List[str]:
         return [str(ability) for ability in self.abilities.values()]
+
+    def list_abilities_functions(self) -> List:
+        return [ability.to_function() for ability in self.abilities.values()]
 
     def abilities_description(self) -> str:
         abilities_by_category = {}

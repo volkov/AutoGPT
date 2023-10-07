@@ -177,32 +177,34 @@ class ForgeAgent(Agent):
         print("Prompt:")
         pprint.pprint(messages)
 
-        chat_response = await chat_completion_request(messages, model="gpt-3.5-turbo")
+        functions = self.abilities.list_abilities_functions()
+        print("Functions:")
+        pprint.pprint(functions)
+        chat_response = await chat_completion_request(messages, model="gpt-4-0613",
+                                                      functions=functions)
         raw_answer = chat_response["choices"][0]["message"]["content"]
+        function_call = chat_response["choices"][0]["message"].get("function_call")
         # print
         print("Raw Answer:")
         pprint.pprint(raw_answer)
+        print("Calls")
+        pprint.pprint(function_call)
 
-        answer = json.loads(raw_answer)
-        ability = answer["ability"]
+        answer = json.loads(raw_answer or "{}")
         # print answer and ability
         print("Answer:")
         pprint.pprint(answer)
         print("Ability:")
-        pprint.pprint(ability)
-        if ability["name"] == "write_file":
+        if function_call["name"] == "write_file":
             step.is_last = True
 
         output = await self.abilities.run_ability(
-            task_id, ability["name"], **ability["args"]
+            task_id, function_call["name"], **json.loads(function_call["arguments"])
         )
         print("Output:")
         pprint.pprint(output)
 
-        if ability["name"] == "read_file":
-            additional_input = {"file_content": str(output), "ability": ability}
-
-        step.output = answer["thoughts"]["speak"]
+        step.output = answer.get("thoughts", {}).get("text")
 
         LOG.info(f"Update {step} to done")
         await self.db.update_step(task_id, step.step_id, "done")
@@ -214,7 +216,7 @@ class ForgeAgent(Agent):
             )
         else:
             step_request.input = (step_request.input + "\n" +
-                                  "Your previous action was to run ability " + json.dumps(ability) + "\n"
+                                  "Your previous action was to run function " + json.dumps(function_call) + "\n"
                                   "It's output was " + str(output))
             next_step = await self.db.create_step(
                 task_id=task_id, input=step_request, is_last=False
