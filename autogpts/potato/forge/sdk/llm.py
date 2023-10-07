@@ -17,6 +17,7 @@ async def chat_completion_request(
         kwargs = {
             "model": model,
             "messages": messages,
+            "temperature": 0,
         }
 
         if functions:

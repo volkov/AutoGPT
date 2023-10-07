@@ -17,23 +17,40 @@ def get_current_weather(location, unit="fahrenheit"):
 
 def run_conversation():
     # Step 1: send the conversation and available functions to GPT
-    messages = [{"role": "system", "content": "Use only provided functions"},
-        {"role": "user", "content": 'Create a three_sum function in a file called sample_code.py. '
-                                            'Given an array of integers, return indices of the three numbers '
-                                            'such that they add up to a specific target. You may assume that '
-                                            'each input would have exactly one solution, and you may not use '
-                                            'the same element twice. Example: Given nums = [2, 7, 11, 15], '
-                                            'target = 20, Because nums[0] + nums[1] + nums[2] = 2 + 7 + 11 = '
-                                            '20, return [0, 1, 2].', }]
+    task2 = 'Create a file organizer CLI tool in Python that sorts files in a ' + \
+            'directory based on their file types (e.g., images, documents, ' + \
+            'audio) and moves them into these corresponding folders: ' + \
+            "'images', 'documents', 'audio'. The entry point will be a python " + \
+            'file that can be run this way: python organize_files.py ' + \
+            '--directory_path=YOUR_DIRECTORY_PATH',
+
+    task = 'Create a random password generator. The password should have ' + \
+           'between 8 and 16 characters and should contain letters, numbers ' + \
+           'and symbols. The password should be printed to the console. The ' + \
+           'entry point will be a python file that can be run this way: ' + \
+           'python password_generator.py [--len x] where x is the length of ' + \
+           'the password. If no length is specified, the password should be ' + \
+           '8 characters long. The password_generator can also be imported ' + \
+           'as a module and called as password = ' + \
+           'password_generator.generate_password(len=x). Any invalid input ' + \
+           'should raise a ValueError.'
+    print(task2)
+    messages = [{"role": "system", "content": "You are heplfull assistant"},
+                {"role": "user", "content": task2, }]
     functions = [
-                 {'description': 'Write data to a file',
-                  'name': 'write_file',
-                  'parameters': {'properties': {'data': {'description': 'Data to write to the '
-                                                                        'file',
-                                                         'type': 'string'},
-                                                'file_path': {'description': 'Path to the file',
-                                                              'type': 'string'}},
-                                 'type': 'object'}}]
+        {'description': 'Read data from a file',
+         'name': 'read_file',
+         'parameters': {'properties': {'file_path': {'description': 'Path to the file',
+                                                     'type': 'string'}},
+                        'type': 'object'}},
+        {'description': 'Write data to a file',
+         'name': 'write_file',
+         'parameters': {'properties': {'data': {'description': 'Data to write to the '
+                                                               'file',
+                                                'type': 'string'},
+                                       'file_path': {'description': 'Path to the file',
+                                                     'type': 'string'}},
+                        'type': 'object'}}]
     response = openai.ChatCompletion.create(
         model="gpt-4-0613",
         messages=messages,
@@ -46,7 +63,7 @@ def run_conversation():
     # Step 2: check if GPT wanted to call a function
     call = response_message.get("function_call")
     if call:
-        print(call)
+        # print(call)
         # Step 3: call the function
         # Note: the JSON response may not always be valid; be sure to handle errors
         available_functions = {
