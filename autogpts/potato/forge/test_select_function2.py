@@ -4,13 +4,7 @@ import json
 
 def run_conversation():
     # Step 1: send the conversation and available functions to GPT
-    task = 'Create a file organizer CLI tool in Python that sorts files in a ' + \
-           'directory based on their file types (e.g., images, documents, ' + \
-           'audio) and moves them into these corresponding folders: ' + \
-           "'images', 'documents', 'audio'. The entry point will be a python " + \
-           'file that can be run this way: python organize_files.py ' + \
-           '--directory_path=YOUR_DIRECTORY_PATH'
-
+    task = 'Read the file called file_to_read.txt and write its content to a file called output.txt'
     print(task)
 
     messages = [{"role": "system", "content": "You are heplfull assistant, Please tell which function of 'read_file' or 'write_file' would solve following task, answer only 'read_file' or 'write_file':"},
@@ -49,7 +43,7 @@ def run_conversation():
         model=model,
         messages=messages,
         functions=functions,
-        function_call={"name": "write_file"},  # auto is default, but we'll be explicit
+        function_call={"name": "read_file"},  # auto is default, but we'll be explicit
     )
     print(response["choices"][0]["message"])
 run_conversation()
