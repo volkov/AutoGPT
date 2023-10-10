@@ -16,6 +16,7 @@ from forge.sdk import (
 
 LOG = ForgeLogger(__name__)
 
+MODEL = "gpt-3.5-turbo-0613"
 
 class ForgeAgent(Agent):
     """
@@ -161,27 +162,23 @@ class ForgeAgent(Agent):
             step = await self.db.create_step(
                 task_id=task_id, input=step_request, is_last=False
             )
-        prompt_engine = PromptEngine("gpt-3.5-turbo")
-        system_prompt = prompt_engine.load_prompt("system-format")
-
-        messages = [
-            {"role": "system", "content": system_prompt},
-        ]
-        task_kwargs = {
-            "task": step.input,
-            "abilities": self.abilities.list_abilities_for_prompt(),
-        }
-        task_prompt = prompt_engine.load_prompt("task-step", **task_kwargs)
-        messages.append({"role": "user", "content": task_prompt})
-        # print task
-        print("Prompt:")
+        task = step.input
+        messages = await self.format_messages_for_task("select", task)
+        print("Prompt for select:")
         pprint.pprint(messages)
 
+        chat_response = await chat_completion_request(messages, model=MODEL)
+        raw_answer = chat_response["choices"][0]["message"]["content"]
+        print("Model selected to run: " + raw_answer)
+
+        messages = await self.format_messages_for_task("execute", task)
+        print("Prompt for execute:")
+        pprint.pprint(messages)
         functions = self.abilities.list_abilities_functions()
         print("Functions:")
         pprint.pprint(functions)
-        chat_response = await chat_completion_request(messages, model="gpt-4-0613",
-                                                      functions=functions)
+        chat_response = await chat_completion_request(messages, model=MODEL,
+                                                      functions=functions, function_call={"name": raw_answer})
         raw_answer = chat_response["choices"][0]["message"]["content"]
         function_call = chat_response["choices"][0]["message"].get("function_call")
         # print
@@ -209,10 +206,10 @@ class ForgeAgent(Agent):
         LOG.info(f"Update {step} to done")
         await self.db.update_step(task_id, step.step_id, "done")
 
-        message = f"\t🔄 Step executed: {step.step_id} input: {step.input}"
+        message = f"\t🔄 Step executed: {step.step_id} input: {task}"
         if step.is_last:
             message = (
-                f"\t✅ Final Step completed: {step.step_id} input: {step.input}"
+                f"\t✅ Final Step completed: {step.step_id} input: {task}"
             )
         else:
             step_request.input = (step_request.input + "\n" +
@@ -225,12 +222,14 @@ class ForgeAgent(Agent):
 
         LOG.info(message)
 
-        # artifact = await self.db.create_artifact(
-        #     task_id=task_id,
-        #     step_id=step.step_id,
-        #     file_name="output.txt",
-        #     relative_path="",
-        #     agent_created=True,
-        # )
-
         return step
+
+    async def format_messages_for_task(self, engine, task):
+        prompt_engine = PromptEngine(engine)
+        system_prompt = prompt_engine.load_prompt("system")
+        messages = [
+            {"role": "system", "content": system_prompt},
+        ]
+        user_prompt = prompt_engine.load_prompt("user", task=task)
+        messages.append({"role": "user", "content": user_prompt})
+        return messages
