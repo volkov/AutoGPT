@@ -4,8 +4,8 @@ import json
 
 def run_conversation():
     # Step 1: send the conversation and available functions to GPT
-    task = 'Build a basic URL shortener using a python CLI. Here are the ' +\
-    'specifications.\n' + \
+    task = 'Build a basic URL shortener using a python CLI. Here are the ' + \
+           'specifications.\n' + \
            '\n' + \
            'Functionality: The program should have two primary ' + \
            'functionalities.\n' + \
@@ -73,18 +73,26 @@ def run_conversation():
                         'type': 'object'}}]
     model = "gpt-3.5-turbo-0613"
     # model = "gpt-4-0613"
-    messages = [ { "role": "user", "content": task}]
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages,
-    )
+
     print()
     print()
     print('############')
     print("Model talks:")
-    print(response["choices"][0]["message"]["content"])
+    talk_messages = [{"role": "user", "content": task}]
+    response = openai.ChatCompletion.create(
+        model=model,
+        messages=talk_messages,
+    )
+    talk_response = response["choices"][0]["message"]
+    print(talk_response["content"])
+    talk_messages.append(talk_response)
 
-    messages = [{"role": "system", "content": "You are heplfull assistant, Please tell which function of 'read_file' or 'write_file' would solve following task, answer only 'read_file' or 'write_file':"},
+    print()
+    print()
+    print('######################')
+    print("Model select fucntion:")
+    messages = [{"role": "system",
+                 "content": "You are heplfull assistant, Please tell which function of 'read_file' or 'write_file' would solve following task, answer only 'read_file' or 'write_file':"},
                 {"role": "user",
                  "content": task}]
 
@@ -92,27 +100,27 @@ def run_conversation():
         model=model,
         messages=messages,
     )
-    print()
-    print()
-    print('######################')
-    print("Model select fucntion:")
-    print(response["choices"][0]["message"]["content"])
+    function_name = response["choices"][0]["message"]["content"]
+    print(function_name)
 
     # Call
-    messages = [{"role": "system", "content": "You are heplfull assistant, Please call function which solve following task, ensure that arguments are correct"},
-                {"role": "user", "content": task}]
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages,
-        functions=functions,
-        function_call={"name": "write_file"},
-    )
     print()
     print()
     print('####################')
     print("Model call function:")
+    talk_messages += [{"role": "system",
+                 "content": "Please call function which solve following task, given following context, ensure that arguments are correct"},
+                {"role": "user", "content": task}]
+    response = openai.ChatCompletion.create(
+        model=model,
+        messages=talk_messages,
+        functions=functions,
+        function_call={"name": "write_file"},
+    )
     print(response["choices"][0]["message"])
 
     print("Content:")
     print(json.loads(response["choices"][0]["message"]["function_call"]["arguments"])["data"])
+
+
 run_conversation()
