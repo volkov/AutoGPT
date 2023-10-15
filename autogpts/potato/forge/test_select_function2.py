@@ -54,6 +54,7 @@ def run_conversation():
            'if __name__ == "__main__":\n' + \
            '    unittest.main()\n' + \
            '```'
+    print("#####")
     print("Task:")
     print(task)
 
@@ -92,7 +93,11 @@ def run_conversation():
     print('######################')
     print("Model select fucntion:")
     messages = [{"role": "system",
-                 "content": "You are heplfull assistant, Please tell which function of 'read_file' or 'write_file' would solve following task, answer only 'read_file' or 'write_file':"},
+                 "content": "You are heplfull assistant." + \
+                            "Please tell which function of 'read_file' or 'write_file' would solve following task." + \
+                            "Answer only 'read_file' or 'write_file'" +\
+                            "Use read_file to get file content if you know that file exists." +\
+                            "Use write_file to create files with code or data."},
                 {"role": "user",
                  "content": task}]
 
@@ -109,8 +114,8 @@ def run_conversation():
     print('####################')
     print("Model call function:")
     talk_messages += [{"role": "system",
-                 "content": "Please call function which solve following task, given following context, ensure that arguments are correct"},
-                {"role": "user", "content": task}]
+                       "content": "Please call function which solve following task, given following context, ensure that arguments are correct"},
+                      {"role": "user", "content": task}]
     response = openai.ChatCompletion.create(
         model=model,
         messages=talk_messages,
