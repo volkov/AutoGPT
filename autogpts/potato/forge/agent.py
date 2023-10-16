@@ -169,6 +169,8 @@ class ForgeAgent(Agent):
         pprint.pprint(talk_messages)
         chat_response = await chat_completion_request(talk_messages, model=MODEL)
         talk_answer = chat_response["choices"][0]["message"]
+        print("🤖 Model talk response:")
+        pprint.pprint(talk_answer)
 
         messages = await self.format_messages_for_task("select", task)
         print("Prompt for select:")
@@ -176,7 +178,7 @@ class ForgeAgent(Agent):
 
         chat_response = await chat_completion_request(messages, model=MODEL)
         raw_answer = chat_response["choices"][0]["message"]["content"]
-        print("Model selected to run: " + raw_answer)
+        print("🤖 Model selected to run: " + raw_answer)
 
         messages = talk_messages + [talk_answer] + await self.format_messages_for_task("execute", task)
         print("Prompt for execute:")
@@ -189,7 +191,7 @@ class ForgeAgent(Agent):
         raw_answer = chat_response["choices"][0]["message"]["content"]
         function_call = chat_response["choices"][0]["message"].get("function_call")
         # print
-        print("Raw Answer:")
+        print("🤖 Raw Answer:")
         pprint.pprint(raw_answer)
         print("Calls")
         pprint.pprint(function_call)

@@ -48,7 +48,9 @@ async def write_file(agent, task_id: str, file_path: str, data: bytes) -> None:
     """
     if isinstance(data, str):
         data = data.encode()
-
+    print(f"➡️➡️File name: {file_path}")
+    print("Content as string")
+    print(data.decode("utf8"))
     agent.workspace.write(task_id=task_id, path=file_path, data=data)
     await agent.db.create_artifact(
         task_id=task_id,
