@@ -223,7 +223,7 @@ class ForgeAgent(Agent):
         else:
             step_request.input = (step_request.input + "\n" +
                                   "Your previous action was to run function " + json.dumps(function_call) + "\n"
-                                  "It's output was " + str(output))
+                                  "It's output was:\n" + output.decode("utf8"))
             next_step = await self.db.create_step(
                 task_id=task_id, input=step_request, is_last=False
             )
