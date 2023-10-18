@@ -181,6 +181,7 @@ class ForgeAgent(Agent):
         print("🤖 Model selected to run: " + raw_answer)
 
         messages = talk_messages + [talk_answer] + await self.format_messages_for_task("execute", task)
+        # messages = await self.format_messages_for_task("execute", task)
         print("Prompt for execute:")
         pprint.pprint(messages)
         functions = self.abilities.list_abilities_functions()
