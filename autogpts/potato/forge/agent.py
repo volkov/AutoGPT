@@ -204,11 +204,7 @@ class ForgeAgent(Agent):
         if function_call["name"] == "write_file":
             step.is_last = True
 
-        output = await self.abilities.run_ability(
-            task_id, function_call["name"], **json.loads(function_call["arguments"])
-        )
-        print("Output:")
-        pprint.pprint(output)
+        output = await self.run_ability(task_id, function_call)
 
         step.output = answer.get("thoughts", {}).get("text")
 
@@ -232,6 +228,14 @@ class ForgeAgent(Agent):
         LOG.info(message)
 
         return step
+
+    async def run_ability(self, task_id, function_call):
+        output = await self.abilities.run_ability(
+            task_id, function_call["name"], **json.loads(function_call["arguments"])
+        )
+        print("Output:")
+        pprint.pprint(output)
+        return output
 
     async def format_messages_for_task(self, engine, task):
         prompt_engine = PromptEngine(engine)
