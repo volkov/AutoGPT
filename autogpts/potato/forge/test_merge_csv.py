@@ -42,13 +42,13 @@ def run_conversation():
     print(file_content)
 
     model = "gpt-3.5-turbo-0613"
-    #model = "gpt-4-0613"
+    model = "gpt-4-0613"
 
     messages = [
         {'content': 'Review following output and task', 'role': 'system'},
         {'content': "Task is:\n" + task_w_data, 'role': 'user'},
         {'content': "Content of output.csv:\n" + file_content, 'role': 'user'},
-        {'content': 'First work out your own file content. Then compare your file with provided', 'role': 'user'}
+        {'content': 'Is content is correct for provided task?', 'role': 'user'}
     ]
     print('############')
     print("Model rethink:")
