@@ -193,7 +193,7 @@ def run_conversation():
             'entrypoint is the battleship class.')
 
     # read battleship.py as string
-    with open("/home/serg-v/AutoGPT/autogpts/potato/forge/battleship.py", "r") as f:
+    with open("/home/serg-v/AutoGPT/autogpts/potato/forge/battleship2.py", "r") as f:
         file_content = f.read()
 
     print("#####")
@@ -210,16 +210,33 @@ def run_conversation():
         {'content': 'Review following output and task', 'role': 'system'},
         {'content': "Task is:\n" + task, 'role': 'user'},
         {'content': 'battleship.py:\n' + file_content, 'role': 'user'},
-        {'content': 'fix problems in battelship.py and print new version, complete incomplete functions, replace pass to actual content', 'role': 'user'}
+        {'content': 'fix problems in battelship.py and print new version, '
+                    'complete incomplete functions, '
+                    'replace pass to actual content.'
+                    'Implement all placeholders and do not leave new', 'role': 'user'}
     ]
     print('############')
     print("Model generate:")
     response = openai.ChatCompletion.create(
         model=model,
         messages=messages,
-        temperature=1,
     )
-    print(response["choices"][0]["message"]["content"])
+    response = response["choices"][0]["message"]
+    print(response["content"])
+    messages + [response, {'content': 'now rewrite file if changes required', 'role': 'system'}]
+
+    print('############')
+    print("Model runs function:")
+    agent = ForgeAgent(None, None)
+    functions = agent.abilities.list_abilities_functions()
+    response = openai.ChatCompletion.create(
+        model=model,
+        messages=messages,
+        functions=functions,
+        function_call={"name": "write_file"},
+    )
+    function_call = response["choices"][0]["message"].get("function_call")
+    asyncio.run(agent.run_ability("test", function_call))
 
 
 
